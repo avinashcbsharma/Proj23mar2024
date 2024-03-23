@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA Picture of the Day</title>
+    <style>
+body {
+    margin: 0;
+    padding: 0;
+}
+#container{
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    color: black;            
+    padding: 0.4px 0px 5px 15px;
+    border-radius: 0px 0px 15px 5px;
+    
+}
+#main{
+    align-items: center;
+    background-color: black;
+    color: #ffff;
+    width:90%;
+    padding: 10px 0px 0px 15px;
+}
+        
+
+#search-form {
+    margin-top: 20px;
+}
+
+#current-image-container {
+    margin-bottom: 20px;
+    width:98%;      
+}
+img{
+    width: 100%;
+}
+#search-history {
+    list-style-type: none;
+    padding: 0;
+}
+
+#search-history li {
+    cursor: pointer;
+    margin-bottom: 5px;
+    color: royalblue;
+    text-decoration: underline;
+}
+</style>
+</head>
+<body>
+ <div id="container">
+    <div id="main">
+        <h1 id="headtxt">NASA Picture of the Day</h1>
+        <section id="current-image-container"></section>
+    </div>
+    <form id="search-form">
+        <label for="search-input">Select Date:</label>
+        <input type="date" id="search-input" required>
+        <button type="submit">Search</button>
+    </form>
+    <h3>Previous Searches</h3>
+    <ul id="search-history"></ul>
+ </div>
+<script>
+    let headTxt = document.querySelector("#headtxt")
+    document.addEventListener("DOMContentLoaded", function() {
+        getCurrentImageOfTheDay();
+        addSearchHistoryToUI();
+    
+        document.getElementById("search-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            getImageOfTheDay();
+    });
+    
+    document.getElementById("search-history").addEventListener("click", function(event) {
+        if (event.target.tagName === "LI") {
+            const selectedDate = event.target.textContent;
+            getImageOfTheDay(selectedDate);
+        }
+    });
+});
+
+function getCurrentImageOfTheDay() {
+    const currentDate = new Date().toISOString().split("T")[0];
+    getImageData(currentDate);
+}
+
+function getImageOfTheDay(date) {
+    const searchInput = date || document.getElementById("search-input").value;
+    if (!searchInput) return;
+    console.log('headTxt: ',headTxt.innerHTML,date);
+    headTxt.innerHTML='Picture On ' + date;
+    getImageData(searchInput);
+    saveSearch(searchInput);
+}
+
+function getImageData(date) {
+    const apiKey = 'ddeaOLRv07jsmnyE85djRPR3yojacMCumQCMUNcU';
+    const apiUrl = `https://api.nasa.gov/planetary/apod?date=${date}&api_key=${apiKey}`;
+
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            displayImageData(data);
+        })
+        .catch(error => console.log(error));
+}
+
+function displayImageData(data) {
+    // headTxt.innerHTML = "Picture On " + date; 
+    const currentImageContainer = document.getElementById("current-image-container");
+    currentImageContainer.innerHTML = `
+        <img src="${data.url}" alt="${data.title} ">
+        <p>${data.explanation}</p>
+    `;
+}
+
+function saveSearch(date) {
+    let searches = JSON.parse(localStorage.getItem('searches')) || [];
+    searches.push(date);
+    localStorage.setItem('searches', JSON.stringify(searches));
+    addSearchHistoryToUI();
+}
+
+function addSearchHistoryToUI() {
+    const searchHistoryList = document.getElementById("search-history");
+    searchHistoryList.innerHTML = '';
+    const searches = JSON.parse(localStorage.getItem('searches')) || [];
+
+    searches.forEach(search => {
+        const listItem = document.createElement('li');
+        listItem.textContent = search;
+        searchHistoryList.appendChild(listItem);
+    });
+}
+</script>
+</body>
+</html>
